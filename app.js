@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // GÜVENLİ GİRİŞ SİSTEMİ (SUPABASE AUTH)
 // ==========================================
 
@@ -13,7 +13,7 @@ window.onload = async function() {
             const el = document.getElementById('login-email');
             if (el) el.focus();
         }
-    } catch (err) {
+    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
         
     }
 };
@@ -53,7 +53,7 @@ async function sistemeGirisYap() {
         } else {
             basariylaGirisYapildi();
         }
-    } catch (err) {
+    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
         errBox.innerText = 'Beklenmeyen bir ağ hatası oluştu.';
         errBox.style.display = 'block';
         btn.disabled = false;
@@ -171,7 +171,7 @@ async function verileriCek() {
         if (error) throw error;
         rawData = data || [];
         istatistikleriHesaplaVeBas(rawData);
-    } catch (err) {
+    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
         if (loadingEl) loadingEl.innerHTML = `<span style="color:var(--danger-red)">Veriler çekilirken hata oluştu: ${err.message}</span>`;
     }
 }
@@ -554,7 +554,7 @@ async function isEmriKaydet(satir) {
         if (error) throw error;
         toastGoster('İş emri kaydedildi!', 'success');
         verileriCek();
-    } catch (err) {
+    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
         toastGoster('Hata: ' + err.message, 'error');
         btn.disabled = false;
         btn.innerText = 'Kaydet';
@@ -640,7 +640,7 @@ async function sifreliKontrolGonder(satir, durum, sifre, callback) {
         toastGoster('Kontrol durumu güncellendi!', 'success');
         verileriCek();
         if(callback) callback({success: true});
-    } catch (err) {
+    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
         toastGoster('Hata: Yetkisiz işlem veya yanlış şifre!', 'error');
         if(callback) callback({success: false, message: 'Hatalı şifre veya yetkisiz işlem!'});
     }
@@ -654,7 +654,7 @@ async function sifreliSilmeGonder(satir, sifre, callback) {
         toastGoster('Kayıt silindi!', 'success');
         verileriCek();
         if(callback) callback({success: true});
-    } catch (err) {
+    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
         toastGoster('Hata: Yetkisiz işlem veya yanlış şifre!', 'error');
         if(callback) callback({success: false, message: 'Hatalı şifre veya yetkisiz işlem!'});
     }
@@ -750,7 +750,7 @@ async function tebligatiKaydet() {
         document.getElementById('m-dosya').value = '';
         document.getElementById('m-aciklama').value = '';
         verileriCek();
-    } catch (err) {
+    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
         toastGoster('Hata: ' + err.message, 'error');
     } finally {
         btn.disabled = false;
@@ -898,7 +898,7 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
             if (error) throw error;
             toastGoster('Kayıt güncellendi!', 'success');
             verileriCek(); // Yeniden yükle
-        } catch (err) {
+        } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
             toastGoster('Hata: ' + err.message, 'error');
             iptalEt();
         }
