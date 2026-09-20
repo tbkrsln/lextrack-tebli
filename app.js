@@ -4,7 +4,7 @@
 
 window.onload = async function() {
     try {
-        const { data: { session }, error } = await sb.auth.getSession();
+        const { data: { session }, error } = await window.sb.auth.getSession();
         if (error) throw error;
         
         if (session) {
@@ -40,7 +40,7 @@ async function sistemeGirisYap() {
     errBox.style.display = 'none';
 
     try {
-        const { error } = await sb.auth.signInWithPassword({
+        const { error } = await window.sb.auth.signInWithPassword({
             email: email,
             password: sifre,
         });
@@ -66,9 +66,9 @@ async function basariylaGirisYapildi() {
     document.getElementById('app-container').style.display = 'block';
     
     try {
-        const { data: { session } } = await sb.auth.getSession();
+        const { data: { session } } = await window.sb.auth.getSession();
         if(session && session.user && session.user.email) {
-            const { data, error } = await sb.from('personel_rolleri').select('*').eq('email', session.user.email).single();
+            const { data, error } = await window.sb.from('personel_rolleri').select('*').eq('email', session.user.email).single();
             if(data) {
                 aktifKullaniciRolu = data.rol;
                 aktifKullaniciIsmi = data.isim;
@@ -91,7 +91,7 @@ async function basariylaGirisYapildi() {
 }
 
 function cikisYap() {
-    sb.auth.signOut().then(() => {
+    window.sb.auth.signOut().then(() => {
         location.reload();
     });
 }
@@ -164,7 +164,7 @@ async function verileriCek() {
     if (dashboardEl) dashboardEl.style.display = 'none';
 
     try {
-        const { data, error } = await sb.from('tebligatlar')
+        const { data, error } = await window.sb.from('tebligatlar')
             .select('*')
             .order('son_tarih', { ascending: true }).limit(5000);
 
@@ -505,7 +505,7 @@ let aktifKullaniciRolu = 'avukat';
 let aktifKullaniciIsmi = '';
 
 async function cikisYap() {
-    await sb.auth.signOut();
+    await window.sb.auth.signOut();
     window.location.reload();
 }
 
@@ -550,7 +550,7 @@ async function isEmriKaydet(satir) {
     const guncelTarih = ('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
     
     try {
-        const { error } = await sb.from('tebligatlar').update({ is_emri_no: inputVal }).eq('id', satir);
+        const { error } = await window.sb.from('tebligatlar').update({ is_emri_no: inputVal }).eq('id', satir);
         if (error) throw error;
         toastGoster('İş emri kaydedildi!', 'success');
         verileriCek();
@@ -635,7 +635,7 @@ function modalSifreyleGonder() {
 async function sifreliKontrolGonder(satir, durum, sifre, callback) {
     toastGoster(durum ? 'Dosya onaylanıyor... 🟢' : 'Kontrol onayı geri alınıyor... 🔄');
     try {
-        const { error } = await sb.rpc('guvenli_onay', { p_id: satir, p_onay: durum, p_sifre: sifre });
+        const { error } = await window.sb.rpc('guvenli_onay', { p_id: satir, p_onay: durum, p_sifre: sifre });
         if(error) throw error;
         toastGoster('Kontrol durumu güncellendi!', 'success');
         verileriCek();
@@ -649,7 +649,7 @@ async function sifreliKontrolGonder(satir, durum, sifre, callback) {
 async function sifreliSilmeGonder(satir, sifre, callback) {
     toastGoster('Kayıt siliniyor... 🗑️');
     try {
-        const { error } = await sb.rpc('guvenli_sil', { p_id: satir, p_sifre: sifre });
+        const { error } = await window.sb.rpc('guvenli_sil', { p_id: satir, p_sifre: sifre });
         if (error) throw error;
         toastGoster('Kayıt silindi!', 'success');
         verileriCek();
@@ -736,7 +736,7 @@ async function tebligatiKaydet() {
     let tTarih = tebligatTarihi ? new Date(tebligatTarihi.split('.').reverse().join('-')) : null;
     
     try {
-        const { error } = await sb.from('tebligatlar').insert([{
+        const { error } = await window.sb.from('tebligatlar').insert([{
             dosya_adi: dosya,
             aciklama: aciklama,
             personel: personel,
@@ -894,7 +894,7 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
                 updateObj[alanAdi] = yeniDeger;
             }
             
-            const { error } = await sb.from('tebligatlar').update(updateObj).eq('id', satirId);
+            const { error } = await window.sb.from('tebligatlar').update(updateObj).eq('id', satirId);
             if (error) throw error;
             toastGoster('Kayıt güncellendi!', 'success');
             verileriCek(); // Yeniden yükle
