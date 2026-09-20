@@ -1,0 +1,3 @@
+window.SUPABASE_URL = "https://nwdmlsjslylagfzzwvzy.supabase.co";
+window.SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53ZG1sc2pzbHlsYWdmenp3dnp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0OTI4NTQsImV4cCI6MjEwNTA2ODg1NH0.DdLiOuu4KPXEQIOJcuxeob0FyFdqhezbJ02eEOFo4J0";
+window.sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
