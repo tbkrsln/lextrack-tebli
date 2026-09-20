@@ -1,0 +1,335 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hukuk Ofisi Tebligat ve İş Takip Paneli</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .personnel-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+        .person-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; width: 220px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .person-card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: var(--primary); }
+        .person-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .person-info h4 { margin: 0; font-size: 14px; color: #1e293b; font-weight: 600; }
+        .person-total { font-size: 11px; color: #64748b; }
+        .person-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
+        .person-stats-box { display: flex; justify-content: space-between; background: #f8fafc; border-radius: 6px; padding: 8px; border: 1px solid #f1f5f9; }
+        .p-stat { display: flex; flex-direction: column; align-items: center; }
+        .p-stat span { font-size: 14px; font-weight: 700; }
+        .p-stat small { font-size: 9px; color: #64748b; margin-top: 2px; }
+    </style>
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+    
+        <div id="login-container" class="login-wrapper">
+        <div class="login-card">
+            <h2 style="margin-top:0; color:var(--text-main); font-size:20px; display:flex; align-items:center; gap:8px; justify-content:center;">
+                <span>⚖️</span> Hukuk Bürosu Girişi
+            </h2>
+            <p style="color:var(--text-muted); font-size:13px; text-align:center; margin-bottom:20px;">Sisteme erişmek için e-posta ve şifrenizi giriniz.</p>
+            <input type="email" id="login-email" placeholder="Personel E-posta" class="input-modern" style="width: 100%; box-sizing: border-box; margin-bottom: 10px;">
+            <input type="password" id="login-password" placeholder="Şifre" class="input-modern" style="width: 100%; box-sizing: border-box;" onkeydown="if(event.key==='Enter') sistemeGirisYap()">
+            <button id="btn-login" class="btn btn-primary" style="width:100%; margin-top:15px; padding:10px; font-weight:600; display:flex; justify-content:center; align-items:center;" onclick="sistemeGirisYap()">Giriş Yap</button>
+            <p id="login-error" style="color:var(--danger-red); font-size:12px; text-align:center; display:none; margin-top:10px;">Hata oluştu</p>
+        </div>
+    </div>
+    <div id="app-container" style="display:none;">
+
+    <!-- ÜST BAŞLIK & İŞLEM BUTONLARI -->
+    <div class="header">
+        <div class="header-left">
+            <h1>⚖️ Hukuk Bürosu Takip Paneli</h1>
+            <span id="sheet-info-badge" class="sheet-badge" style="display: none;">
+                📄 Bağlı E-Tablo: <b id="active-sheet-name">TEBLİGAT</b>
+            </span>
+            <span id="auth-info-badge" class="sheet-badge" style="background: #eef2ff; color: #4338ca; border-color: #c7d2fe;" title="Yönetici kontrol onayları şifre korumalıdır">
+                🛡️ Yönetici Kontrolü: <b id="auth-status-text">🔒 Şifre Korumalı</b>
+                <span id="auth-lock-btn" style="display: none; margin-left: 6px;">
+                    (<a href="javascript:void(0)" onclick="sifreyiSifirla()" style="color: var(--danger-red); font-size: 11px; text-decoration: underline;">Kilitle</a>)
+                </span>
+            </span>
+
+            <span id="live-clock" style="color: var(--text-muted); font-size: 12.5px;"></span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline" id="btn-tebligat-ekle" onclick="tebligatModaliAc()">
+                <span>📝</span> Tebligat Ekle
+            </button>
+            <button class="btn btn-outline" onclick="exceleAktar()" title="Ekrandaki listeyi Excel'e indir">
+                <span>📥</span> Excel'e Aktar
+            </button>
+            <button class="btn btn-outline" onclick="verileriCek()" title="Sayfayı Yenile">
+                <span>🔄</span> Yenile
+            </button>
+            <button class="btn btn-outline" onclick="cikisYap()" title="Güvenli Çıkış Yap" style="border-color: #ef4444; color: #ef4444;">
+                <span>🚪</span> Çıkış Yap
+            </button>
+        </div>
+    </div>
+
+    <!-- HIZLI TEBLİGAT AKSİYON BARI -->
+    <div class="action-banner">
+        <div class="action-banner-info">
+            <h4>📨 Yeni Gelen Bir Tebligatınız mı Var?</h4>
+            <p>UETS başlığını doğrudan kopyalayıp tek seferde yapıştırarak yasal süreleri başlatabilirsiniz.</p>
+        </div>
+        <button class="btn btn-primary" onclick="tebligatModaliAc()">
+            <span>➕</span> Yeni Tebligat Girişi Yap
+        </button>
+    </div>
+
+    <!-- YÜKLENİYOR / HATA ALANI -->
+    <div id="loading" class="loading-wrap">
+        <div class="spinner"></div><br>
+        Excel ve Tebligat Verileri Yükleniyor... Lütfen Bekleyin ⏳
+    </div>
+
+    <!-- DASHBOARD İÇERİK -->
+    <div id="dashboard" style="display: none;">
+        
+        <!-- 5'Lİ ÖZET SAYAÇ KARTLARI -->
+        <div class="summary-grid">
+            <div class="summary-card card-geciken" onclick="filtreUygula('Geciken')">
+                <span>🚨 Geciken İşler</span>
+                <h2 class="c-red" id="s-geciken">0 Dosya</h2>
+                <p class="c-red">Süresi dolmuş tebligatlar</p>
+            </div>
+            <div class="summary-card card-acil" onclick="filtreUygula('Acil')">
+                <span>⚡ Acil Süreler (≤ 3 Gün)</span>
+                <h2 class="c-yellow" id="s-acil">0 Dosya</h2>
+                <p class="c-yellow">Gecikme riski yüksek</p>
+            </div>
+            <div class="summary-card card-bekleyen" onclick="filtreUygula('Bekleyen')">
+                <span>⏳ Bekleyen Tebligatlar</span>
+                <h2 class="c-blue" id="s-bekleyen">0 Dosya</h2>
+                <p class="c-blue">İş emri girilmemiş</p>
+            </div>
+            <div class="summary-card card-biten" onclick="filtreUygula('Biten')">
+                <span>✅ Kapatılan İşler</span>
+                <h2 class="c-green" id="s-biten">0 Dosya</h2>
+                <p class="c-green">İş emriyle tamamlanan</p>
+            </div>
+            <div class="summary-card card-kontrol" onclick="filtreUygula('KontrolEdildi')">
+                <span>🛡️ Yönetici Kontrolü</span>
+                <h2 class="c-indigo" id="s-kontrol">0 Onaylı</h2>
+                <p class="c-indigo" id="s-kontrol-sub">0 Bekliyor</p>
+            </div>
+        </div>
+
+        <!-- PERSONEL İŞ YÜKÜ -->
+        <div class="section-header">
+            <h3 class="section-title">👥 Personel İş Yükü Dağılımı</h3>
+            <span style="font-size: 12px; color: var(--text-muted);">Personele tıklayarak listeyi filtreleyebilirsiniz</span>
+        </div>
+        <div id="personnel-grid" class="personnel-grid"></div>
+
+        <!-- FİLTRE VE ARAMA ÇUBUĞU -->
+        <div class="section-header">
+            <h3 class="section-title">📋 Tebligat Kayıtları ve İş Emri Arşivi</h3>
+        </div>
+        <div class="toolbar">
+            <div class="search-box">
+                <span class="icon">🔍</span>
+                <input type="text" id="search-input" placeholder="UETS Başlığı, Dosya No, Açıklama veya Sorumlu Ara..." oninput="filtreleVeGoster()">
+            </div>
+            <div class="filter-group">
+                <div class="filter-pill active" id="pill-all" onclick="filtreUygula('Tümü')">Tümü (<span id="count-all">0</span>)</div>
+                <div class="filter-pill pill-geciken" id="pill-geciken" onclick="filtreUygula('Geciken')">🚨 Geciken (<span id="count-geciken">0</span>)</div>
+                <div class="filter-pill pill-acil" id="pill-acil" onclick="filtreUygula('Acil')">⚡ Acil (<span id="count-acil">0</span>)</div>
+                <div class="filter-pill" id="pill-bekleyen" onclick="filtreUygula('Bekleyen')">⏳ Bekleyen (<span id="count-bekleyen">0</span>)</div>
+                <div class="filter-pill pill-biten" id="pill-biten" onclick="filtreUygula('Biten')">✅ Biten (<span id="count-biten">0</span>)</div>
+                <div class="filter-pill pill-kontrol-ok" id="pill-kontrol-ok" onclick="filtreUygula('KontrolEdildi')">🛡️ Kontrol Edildi (<span id="count-kontrol-ok">0</span>)</div>
+                <div class="filter-pill pill-kontrol-wait" id="pill-kontrol-wait" onclick="filtreUygula('KontrolBekleyen')">🔍 Kontrol Bekliyor (<span id="count-kontrol-wait">0</span>)</div>
+                <select id="person-filter" class="select-person" onchange="filtreleVeGoster()">
+                    <option value="">Tüm Personeller</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- LİSTE TABLOSU -->
+        <div class="table-container">
+            <table class="main-table">
+                <thead>
+                    <tr>
+                        <th style="width: 7%;">DURUM</th>
+                        <th style="width: 10%;">SON TARİH</th>
+                        <th style="width: 26%;">UETS BAŞLIĞI / DOSYA BİLGİSİ</th>
+                        <th style="width: 19%;">İŞLEM AÇIKLAMASI</th>
+                        <th style="width: 9%;">SORUMLU</th>
+                        <th style="width: 15%;">İŞ EMRİ BİLGİSİ</th>
+                        <th style="width: 9%; text-align: center;">🛡️ KONTROL</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+            <div id="empty-message" class="empty-state" style="display: none;">
+                Kriterlere uygun herhangi bir tebligat kaydı bulunamadı.
+            </div>
+        </div>
+    </div>
+
+    <!-- 📨 TEBLİGAT EKLEME MODALI -->
+    <div class="modal-overlay" id="tebligat-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><span>📨</span> Yeni Tebligat Ekle & Yasal Süre Başlat</h3>
+                <button class="modal-close" onclick="tebligatModaliKapat()">✕</button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- UETS BAŞLIĞI / DOSYA BİLGİSİ (BİRLEŞİK TEK GENİŞ ALAN) -->
+                <div class="form-group">
+                    <label>UETS BAŞLIĞI / DOSYA BİLGİSİ *</label>
+                    <input type="text" id="m-dosya" class="form-control" placeholder="Örn: İstanbul Anadolu 22. İş Mahkemesi 2026/267 [ALLSERVİCE MAİLİ-25.8.2026]">
+                    <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                        💡 UETS posta başlığını, mahkeme veya icra dosya adını tek parça halinde buraya yapıştırabilirsiniz.
+                    </span>
+                </div>
+
+                <!-- Tebligat Türü (Akıllı Otomatik Süre Seçici + Serbest Giriş) -->
+                <div class="form-group">
+                    <label>TEBLİGAT TÜRÜ</label>
+                    <select id="m-tur" class="form-control" onchange="tebligatTuruDegisti()">
+                        <option value="">-- Tebligat Türü Seçin --</option>
+                        <option value="odeme_emri" data-days="7" data-desc="Ödeme emrine itiraz dilekçesi hazırlanması">Ödeme Emri (7 Günlük İtiraz Süresi)</option>
+                        <option value="tensip" data-days="14" data-desc="Dava dilekçesine / tensip zaptına cevap dilekçesi sunulması">Tensip Zaptı / Dava Dilekçesi (2 Hafta / 14 Gün)</option>
+                        <option value="bilirkisi" data-days="14" data-desc="Bilirkişi raporuna karşı itiraz ve beyan sunulması">Bilirkişi Raporu (2 Hafta / 14 Gün)</option>
+                        <option value="haciz_103" data-days="7" data-desc="103 davetiyesine ve hacze karşı beyanda bulunulması">İcra Haciz / 103 Davetiyesi (7 Gün)</option>
+                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Gerekçeli Karar (İstinaf Süresi - 2 Hafta)</option>
+                        <option value="muhtira" data-days="7" data-desc="Muhtıra gereğinin yerine getirilmesi">Muhtıra / Eksiklik Giderme (1 Hafta / 7 Gün)</option>
+                        <option value="diger">✍️ Diğer / Serbest Giriş (Özel Tür Yaz)</option>
+                    </select>
+                    <!-- Diğer seçildiğinde serbestçe yazılabilecek alan -->
+                    <input type="text" id="m-tur-custom" class="form-control" placeholder="Tebligat konusunu / türünü buraya serbestçe yazın..." style="display: none; margin-top: 8px; border-color: var(--accent-blue);">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>TEBLİĞ TARİHİ *</label>
+                        <input type="date" id="m-tebligat-tarihi" class="form-control" onchange="tarihVeyaSureDegisti()">
+                    </div>
+                    <div class="form-group">
+                        <label>SON TARİH / VADE *</label>
+                        <input type="date" id="m-son-tarih" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Hızlı Gün Butonları -->
+                <div>
+                    <div class="quick-days">
+                        <span style="font-size: 11px; color: var(--text-muted); align-self: center;">Hızlı Süre:</span>
+                        <button type="button" class="btn-day" onclick="hizliSureEkle(3)">+3 Gün</button>
+                        <button type="button" class="btn-day" onclick="hizliSureEkle(7)">+7 Gün (İcra)</button>
+                        <button type="button" class="btn-day" onclick="hizliSureEkle(10)">+10 Gün</button>
+                        <button type="button" class="btn-day" onclick="hizliSureEkle(14)">+14 Gün (2 Hafta)</button>
+                        <button type="button" class="btn-day" onclick="hizliSureEkle(15)">+15 Gün</button>
+                        <button type="button" class="btn-day" onclick="hizliSureEkle(30)">+30 Gün</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>YAPILACAK İŞLEM / AÇIKLAMA *</label>
+                    <input type="text" id="m-aciklama" class="form-control" placeholder="Örn: Ödeme emrine itiraz dilekçesi hazırlanıp icraya sunulacak">
+                </div>
+
+                <!-- Sorumlu Personel -->
+                <div class="form-group">
+                    <label>SORUMLU AVUKAT / PERSONEL</label>
+                    <select id="m-personel-select" class="form-control" onchange="personelSelectDegisti()">
+                        <option value="">Personel Seçin...</option>
+                    </select>
+                    <!-- Yeni personel yazma alanı -->
+                    <input type="text" id="m-personel-custom" class="form-control" placeholder="Yeni personelin adını ve soyadını yazın..." style="display: none; margin-top: 8px; border-color: var(--accent-blue);">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="tebligatModaliKapat()">İptal</button>
+                <button class="btn btn-tebligat" id="btn-modal-kaydet" onclick="tebligatiKaydet()">
+                    <span>💾</span> Sisteme Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔒 YÖNETİCİ ŞİFRE ONAY MODALI -->
+    <div class="modal-overlay" id="sifre-modal">
+        <div class="modal-container" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 id="sifre-modal-baslik"><span>🔒</span> Yönetici Kontrol Onayı</h3>
+                <button class="modal-close" onclick="sifreModaliKapat()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;" id="sifre-modal-aciklama">
+                    Bu dosyayı <b id="sifre-modal-islem-tipi">onaylamak</b> için lütfen <b>Yönetici Kontrol Şifresini</b> giriniz:
+                </p>
+                <div class="form-group" style="margin-top: 12px; margin-bottom: 8px;">
+                    <label>YÖNETİCİ ŞİFRESİ</label>
+                    <input type="password" id="modal-sifre-input" class="form-control" placeholder="Şifrenizi yazın..." onkeydown="if(event.key==='Enter') modalSifreyleGonder()">
+                    <div id="sifre-hata-kutusu" style="display: none; color: var(--danger-red); font-size: 12px; margin-top: 6px; font-weight: 600;"></div>
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); cursor: pointer;">
+                    <input type="checkbox" id="modal-sifre-hatirla" checked> Bu oturumda şifreyi hatırla (Her dosyada tekrar sormasın)
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="sifreModaliKapat()">İptal</button>
+                <button class="btn btn-success" id="btn-sifre-onayla" onclick="modalSifreyleGonder()" style="background-color: var(--success-green); color: white; border: none;">
+                    <span>✅</span> Onayla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>window.onerror = function(msg, url, line) { document.getElementById("loading").innerHTML += "<br><br><span style=\"color:red;\">HATA: " + msg + " (Satır: " + line + ")</span>"; };</script>
+    <script src="supabase-config.js?v=27"></script>
+    <script src="app.js?v=27"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
