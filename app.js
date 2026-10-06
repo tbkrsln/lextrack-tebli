@@ -477,18 +477,27 @@ function verileriEkranaBas(tasks) {
             }
         }
 
-        tr.innerHTML = `
+              tr.innerHTML = `
             <td style="white-space: nowrap;"><span class="badge ${badgeClass}">${ikon} ${(t.durum || '').toUpperCase()}</span></td>
+            
             <td style="white-space: nowrap;" class="${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'son_tarih', '${t.sonTarih}', this, 'date')` : ''}">
                 <b style="font-size: 12.5px; color: var(--text-main);">${escapeHtml(t.sonTarih || '-')}</b>
                 <span class="time-badge ${t.durum === 'Geciken' ? 'c-red' : (t.durum === 'Acil' ? 'c-yellow' : '')}">${escapeHtml(t.kalanGunMetni || '')}</span>
             </td>
+            
             <td class="cell-dosya ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'dosya_adi', '${escapeHtml((t.dosyaAdi || '').replace(/'/g, "\\'"))}', this, 'text')` : ''}">
                 <div class="dosya-title">${escapeHtml(t.dosyaAdi || 'İsimsiz Dosya')}</div>
                 <span class="dosya-sub">Tebliğ: ${escapeHtml(t.tebligatTarihi || '-')}</span>
             </td>
+            
             <td class="cell-aciklama ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'aciklama', '${escapeHtml((t.aciklama || '').replace(/'/g, "\\'"))}', this, 'textarea')` : ''}">${escapeHtml(t.aciklama || '-')}</td>
+            
+            <td class="cell-surec editable-cell" style="cursor:pointer;" onclick="herkesDuzenleyebilir(this, '${t.satir}', 'surec_aciklamasi', '${escapeHtml((t.surec_aciklamasi || '').replace(/'/g, "\\'"))}')" title="Süreci veya ara işlemleri düzenlemek için tıklayın">
+                ${escapeHtml(t.surec_aciklamasi || '-')}
+            </td>
+            
             <td class="cell-personel ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'personel', '${escapeHtml(t.personel || '')}', this, 'select')` : ''}"><span class="personel-tag">👤 ${escapeHtml(t.personel || 'Atanmadı')}</span></td>
+            
             <td class="cell-emir">${isEmirHucresi}</td>
             <td class="cell-kontrol">${kontrolHucresi}</td>
         `;
