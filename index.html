@@ -157,11 +157,10 @@
                     <tr>
                         <th style="width: 7%;">DURUM</th>
                         <th style="width: 10%;">SON TARİH</th>
-                        <th style="width: 26%;">UETS BAŞLIĞI / DOSYA BİLGİSİ</th>
-                        <th style="width: 19%;">İŞLEM AÇIKLAMASI</th>
-                        <th>SÜREÇ AÇIKLAMASI/ARA İŞLEMLER</th>
+                        <th style="width: 23%;">UETS BAŞLIĞI / DOSYA BİLGİSİ</th>
+                        <th style="width: 16%;">İŞLEM AÇIKLAMASI</th>`n                        <th style="width: 15%;">SÜREÇ AÇIKLAMASI/ARA İŞLEMLER</th>
                         <th style="width: 9%;">SORUMLU</th>
-                        <th style="width: 15%;">İŞ EMRİ BİLGİSİ</th>
+                        <th style="width: 11%;">İŞ EMRİ BİLGİSİ</th>
                         <th style="width: 9%; text-align: center;">🛡️ KONTROL</th>
                     </tr>
                 </thead>
@@ -185,7 +184,7 @@
                 <!-- UETS BAŞLIĞI / DOSYA BİLGİSİ (BİRLEŞİK TEK GENİŞ ALAN) -->
                 <div class="form-group">
                     <label>UETS BAŞLIĞI / DOSYA BİLGİSİ *</label>
-                    <input type="text" id="m-dosya" class="form-control" placeholder="UETS BAŞLIĞINI EKLEYİNİZ.">
+                    <input type="text" id="m-dosya" class="form-control" placeholder="Örn: İstanbul Anadolu 22. İş Mahkemesi 2026/267 [ALLSERVİCE MAİLİ-25.8.2026]">
                     <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
                         💡 UETS posta başlığını, mahkeme veya icra dosya adını tek parça halinde buraya yapıştırabilirsiniz.
                     </span>
@@ -196,26 +195,12 @@
                     <label>TEBLİGAT TÜRÜ</label>
                     <select id="m-tur" class="form-control" onchange="tebligatTuruDegisti()">
                         <option value="">-- Tebligat Türü Seçin --</option>
-                        <option value="odeme_emri" data-days="7" data-desc="Ödeme emrine itiraz dilekçesi hazırlanması">Bilirkişi Raporu [7 gün]</option>
-                        <option value="bilirkisi" data-days="14" data-desc="Bilirkişi raporuna karşı itiraz ve beyan sunulması">Bilirkişi Raporu (2 Hafta / 14 Gün)</option>
-                        <option value="haciz_103" data-days="7" data-desc="103 davetiyesine ve hacze karşı beyanda bulunulması">Bilirkişi Raporu [19 gün]</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Sıra Cetveli Ve Derece Kararı</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Satış İlanı</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">İcra Emri [7 gün]</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Ödeme Emrine İtiraz</option>
-                         <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Ödeme Emrine İtiraz - Karar Tensip Tutanağı</option>
-                         <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Karar Tensip Tutanağı</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Duruşma Tutanağı</option>
-                         <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Karar İlamı</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">İstinaf Dilekçesi</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Cevap Dilekçesi</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">İkinci Cevap Dilekçesi</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Cevaba Cevap Dilekçesi</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Islah Dilekçesi</option>
-                        <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">İhtarname [Noter]</option>
-                        <option value="muhtira" data-days="7" data-desc="Muhtıra gereğinin yerine getirilmesi">Muhtıra (1 Hafta / 7 Gün)</option>
+                        <option value="odeme_emri" data-days="7" data-desc="Ödeme emrine itiraz dilekçesi hazırlanması">Ödeme Emri (7 Günlük İtiraz Süresi)</option>
                         <option value="tensip" data-days="14" data-desc="Dava dilekçesine / tensip zaptına cevap dilekçesi sunulması">Tensip Zaptı / Dava Dilekçesi (2 Hafta / 14 Gün)</option>
+                        <option value="bilirkisi" data-days="14" data-desc="Bilirkişi raporuna karşı itiraz ve beyan sunulması">Bilirkişi Raporu (2 Hafta / 14 Gün)</option>
+                        <option value="haciz_103" data-days="7" data-desc="103 davetiyesine ve hacze karşı beyanda bulunulması">İcra Haciz / 103 Davetiyesi (7 Gün)</option>
                         <option value="karar_istinaf" data-days="14" data-desc="Gerekçeli karara karşı istinaf dilekçesi hazırlanması">Gerekçeli Karar (İstinaf Süresi - 2 Hafta)</option>
+                        <option value="muhtira" data-days="7" data-desc="Muhtıra gereğinin yerine getirilmesi">Muhtıra / Eksiklik Giderme (1 Hafta / 7 Gün)</option>
                         <option value="diger">✍️ Diğer / Serbest Giriş (Özel Tür Yaz)</option>
                     </select>
                     <!-- Diğer seçildiğinde serbestçe yazılabilecek alan -->
@@ -250,10 +235,6 @@
                     <label>YAPILACAK İŞLEM / AÇIKLAMA *</label>
                     <input type="text" id="m-aciklama" class="form-control" placeholder="Örn: Ödeme emrine itiraz dilekçesi hazırlanıp icraya sunulacak">
                 </div>
-                <div class="form-group">
-                    <label>Süreç Açıklaması / Ara İşlemler</label>
-                <textarea id="m-surec-aciklamasi" class="input-modern" placeholder="Süreç açıklaması veya ara işlemleri buraya girin..." rows="2"></textarea>
-                    </div>
 
                 <!-- Sorumlu Personel -->
                 <div class="form-group">
@@ -312,6 +293,9 @@
     <script src="app.js?v=28"></script>
 </body>
 </html>
+
+
+
 
 
 

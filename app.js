@@ -387,7 +387,7 @@ function verileriEkranaBas(tasks) {
         let kisiUygun = (personVal === '' || t.personel === personVal);
         let aramaUygun = true;
         if(searchVal) {
-            let metin = (t.dosyaAdi + ' ' + t.aciklama + ' ' + t.personel + ' ' + t.isEmirNo).toLowerCase();
+            let metin = (t.dosyaAdi + ' ' + t.aciklama + ' ' + (t.surec_aciklamasi || '') + ' ' + t.personel + ' ' + t.isEmirNo).toLowerCase();
             aramaUygun = metin.includes(searchVal);
         }
         return durumUygun && kisiUygun && aramaUygun;
@@ -477,27 +477,18 @@ function verileriEkranaBas(tasks) {
             }
         }
 
-              tr.innerHTML = `
+        tr.innerHTML = `
             <td style="white-space: nowrap;"><span class="badge ${badgeClass}">${ikon} ${(t.durum || '').toUpperCase()}</span></td>
-            
             <td style="white-space: nowrap;" class="${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'son_tarih', '${t.sonTarih}', this, 'date')` : ''}">
                 <b style="font-size: 12.5px; color: var(--text-main);">${escapeHtml(t.sonTarih || '-')}</b>
                 <span class="time-badge ${t.durum === 'Geciken' ? 'c-red' : (t.durum === 'Acil' ? 'c-yellow' : '')}">${escapeHtml(t.kalanGunMetni || '')}</span>
             </td>
-            
             <td class="cell-dosya ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'dosya_adi', '${escapeHtml((t.dosyaAdi || '').replace(/'/g, "\\'"))}', this, 'text')` : ''}">
                 <div class="dosya-title">${escapeHtml(t.dosyaAdi || 'İsimsiz Dosya')}</div>
                 <span class="dosya-sub">Tebliğ: ${escapeHtml(t.tebligatTarihi || '-')}</span>
             </td>
-            
             <td class="cell-aciklama ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'aciklama', '${escapeHtml((t.aciklama || '').replace(/'/g, "\\'"))}', this, 'textarea')` : ''}">${escapeHtml(t.aciklama || '-')}</td>
-            
-            <td class="cell-surec editable-cell" style="cursor:pointer;" onclick="herkesDuzenleyebilir(this, '${t.satir}', 'surec_aciklamasi', '${escapeHtml((t.surec_aciklamasi || '').replace(/'/g, "\\'"))}')" title="Süreci veya ara işlemleri düzenlemek için tıklayın">
-                ${escapeHtml(t.surec_aciklamasi || '-')}
-            </td>
-            
             <td class="cell-personel ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'personel', '${escapeHtml(t.personel || '')}', this, 'select')` : ''}"><span class="personel-tag">👤 ${escapeHtml(t.personel || 'Atanmadı')}</span></td>
-            
             <td class="cell-emir">${isEmirHucresi}</td>
             <td class="cell-kontrol">${kontrolHucresi}</td>
         `;
@@ -748,7 +739,6 @@ async function tebligatiKaydet() {
         const { error } = await window.sb.from('tebligatlar').insert([{
             dosya_adi: dosya,
             aciklama: aciklama,
-            surec_aciklamasi: surecAciklamasi,
             personel: personel,
             tebligat_tarihi: tTarih,
             son_tarih: sTarih
@@ -795,7 +785,7 @@ function exceleAktar() {
         let kisiUygun = (personVal === '' || t.personel === personVal);
         let aramaUygun = true;
         if(searchVal) {
-            let metin = (t.dosyaAdi + ' ' + t.aciklama + ' ' + t.personel + ' ' + t.isEmirNo).toLowerCase();
+            let metin = (t.dosyaAdi + ' ' + t.aciklama + ' ' + (t.surec_aciklamasi || '') + ' ' + t.personel + ' ' + t.isEmirNo).toLowerCase();
             aramaUygun = metin.includes(searchVal);
         }
         return durumUygun && kisiUygun && aramaUygun;
@@ -920,12 +910,15 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
         if (e.key === 'Escape') iptalEt();
     });
 };
+
+
+
 // Herkesin düzenleyebileceği Süreç Açıklaması fonksiyonu
-async function herkesDuzenleyebilir(hucre, satirId, alanAdi, eskiDeger) {
+window.herkesDuzenleyebilir = async function(hucre, satirId, alanAdi, eskiDeger) {
     let yeniDeger = prompt("Lütfen yeni süreci veya ara işlemi girin:", eskiDeger !== '-' ? eskiDeger : '');
     
-    // Eğer iptale basılmadıysa ve değer değiştiyse
     if (yeniDeger !== null && yeniDeger !== eskiDeger) {
+        let orjinalHtml = hucre.innerHTML;
         hucre.innerText = 'Kaydediliyor...';
         
         try {
@@ -933,30 +926,10 @@ async function herkesDuzenleyebilir(hucre, satirId, alanAdi, eskiDeger) {
             if (error) throw error;
             
             hucre.innerText = yeniDeger || '-';
-            // İsterseniz buraya toastGoster('Süreç güncellendi!', 'success'); ekleyebilirsiniz.
         } catch (err) {
             alert('Hata oluştu: ' + err.message);
-            hucre.innerText = eskiDeger || '-';
+            hucre.innerHTML = orjinalHtml;
         }
     }
-}
-// Herkesin düzenleyebileceği Süreç Açıklaması fonksiyonu
-async function herkesDuzenleyebilir(hucre, satirId, alanAdi, eskiDeger) {
-    let yeniDeger = prompt("Lütfen yeni süreci veya ara işlemi girin:", eskiDeger !== '-' ? eskiDeger : '');
-    
-    // Eğer iptale basılmadıysa ve değer değiştiyse
-    if (yeniDeger !== null && yeniDeger !== eskiDeger) {
-        hucre.innerText = 'Kaydediliyor...';
-        
-        try {
-            const { error } = await window.sb.from('tebligatlar').update({ [alanAdi]: yeniDeger }).eq('id', satirId);
-            if (error) throw error;
-            
-            hucre.innerText = yeniDeger || '-';
-            // İsterseniz buraya toastGoster('Süreç güncellendi!', 'success'); ekleyebilirsiniz.
-        } catch (err) {
-            alert('Hata oluştu: ' + err.message);
-            hucre.innerText = eskiDeger || '-';
-        }
-    }
-}
+};
+
