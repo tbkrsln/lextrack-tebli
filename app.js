@@ -917,7 +917,7 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
 
 // Herkesin düzenleyebileceği Süreç Açıklaması fonksiyonu
 window.herkesDuzenleyebilir = async function(hucre, satirId, alanAdi, eskiDeger) {
-    let yeniDeger = prompt("Lütfen yeni süreci veya ara işlemi girin:", eskiDeger !== '-' ? eskiDeger : '');
+    let yeniDeger = prompt("Lütfen yeni süreci veya ara işlemi girin:", eskiDeger !== 'Süreç açıklamanızı giriniz...' ? eskiDeger : '');
     
     if (yeniDeger !== null && yeniDeger !== eskiDeger) {
         let orjinalHtml = hucre.innerHTML;
@@ -927,7 +927,7 @@ window.herkesDuzenleyebilir = async function(hucre, satirId, alanAdi, eskiDeger)
             const { error } = await window.sb.from('tebligatlar').update({ [alanAdi]: yeniDeger }).eq('id', satirId);
             if (error) throw error;
             
-            hucre.innerText = yeniDeger || '-';
+            hucre.innerText = yeniDeger || 'Süreç açıklamanızı giriniz...';
         } catch (err) {
             alert('Hata oluştu: ' + err.message);
             hucre.innerHTML = orjinalHtml;
