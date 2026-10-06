@@ -240,6 +240,7 @@ function istatistikleriHesaplaVeBas(dataRows) {
             durum: durum,
             dosyaAdi: row.dosya_adi,
             aciklama: row.aciklama,
+            surec_aciklamasi: row.surec_aciklamasi,
             personel: pers,
             tebligatTarihi: tTarih ? tTarih.toLocaleDateString('tr-TR') : '-',
             sonTarih: sTarih ? sTarih.toLocaleDateString('tr-TR') : '-',
@@ -736,11 +737,13 @@ async function tebligatiKaydet() {
 
     let sTarih = sonTarih ? new Date(sonTarih.split('.').reverse().join('-')) : null;
     let tTarih = tebligatTarihi ? new Date(tebligatTarihi.split('.').reverse().join('-')) : null;
+    let surecAciklama = document.getElementById('m-surec-aciklamasi') ? document.getElementById('m-surec-aciklamasi').value.trim() : '';
     
     try {
         const { error } = await window.sb.from('tebligatlar').insert([{
             dosya_adi: dosya,
             aciklama: aciklama,
+            surec_aciklamasi: surecAciklama,
             personel: personel,
             tebligat_tarihi: tTarih,
             son_tarih: sTarih
