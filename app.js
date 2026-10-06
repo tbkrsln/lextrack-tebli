@@ -409,6 +409,7 @@ function verileriEkranaBas(tasks) {
         else if (t.durum === 'Acil') { badgeClass = 'badge-acil'; rowClass = 'row-acil'; ikon = '⚡'; }
 
         tr.className = rowClass;
+        let isMyTask = (aktifKullaniciRolu === 'yonetici' || (aktifKullaniciRolu === 'avukat' && t.personel === aktifKullaniciIsmi));
 
                 let isEmirHucresi = '';
         if (t.isEmirNo) {
@@ -488,7 +489,7 @@ function verileriEkranaBas(tasks) {
                 <span class="dosya-sub">Tebliğ: ${escapeHtml(t.tebligatTarihi || '-')}</span>
             </td>
             <td class="cell-aciklama ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'aciklama', '${escapeHtml((t.aciklama || '').replace(/'/g, "\\'"))}', this, 'textarea')` : ''}">${escapeHtml(t.aciklama || '-')}</td>
-            <td class="cell-surec editable-cell" onclick="hucreDuzenleAc('${t.satir}', 'surec_aciklamasi', '${escapeHtml((t.surec_aciklamasi || '').replace(/'/g, "\\\""))}', this, 'textarea')">${escapeHtml(t.surec_aciklamasi || '-')}</td>
+            <td class="cell-surec ${isMyTask ? 'editable-cell' : ''}" onclick="${isMyTask ? `hucreDuzenleAc('${t.satir}', 'surec_aciklamasi', '${escapeHtml((t.surec_aciklamasi || '').replace(/'/g, "\\'"))}', this, 'textarea')` : ''}">${escapeHtml(t.surec_aciklamasi || '-')}</td>
             <td class="cell-personel ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'personel', '${escapeHtml(t.personel || '')}', this, 'select')` : ''}"><span class="personel-tag">👤 ${escapeHtml(t.personel || 'Atanmadı')}</span></td>
             <td class="cell-emir">${isEmirHucresi}</td>
             <td class="cell-kontrol">${kontrolHucresi}</td>
@@ -933,5 +934,8 @@ window.herkesDuzenleyebilir = async function(hucre, satirId, alanAdi, eskiDeger)
         }
     }
 };
+
+
+
 
 
