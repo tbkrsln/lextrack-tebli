@@ -748,6 +748,7 @@ async function tebligatiKaydet() {
         const { error } = await window.sb.from('tebligatlar').insert([{
             dosya_adi: dosya,
             aciklama: aciklama,
+            surec_aciklamasi: surecAciklamasi,
             personel: personel,
             tebligat_tarihi: tTarih,
             son_tarih: sTarih
@@ -919,5 +920,43 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
         if (e.key === 'Escape') iptalEt();
     });
 };
-
-
+// Herkesin düzenleyebileceği Süreç Açıklaması fonksiyonu
+async function herkesDuzenleyebilir(hucre, satirId, alanAdi, eskiDeger) {
+    let yeniDeger = prompt("Lütfen yeni süreci veya ara işlemi girin:", eskiDeger !== '-' ? eskiDeger : '');
+    
+    // Eğer iptale basılmadıysa ve değer değiştiyse
+    if (yeniDeger !== null && yeniDeger !== eskiDeger) {
+        hucre.innerText = 'Kaydediliyor...';
+        
+        try {
+            const { error } = await window.sb.from('tebligatlar').update({ [alanAdi]: yeniDeger }).eq('id', satirId);
+            if (error) throw error;
+            
+            hucre.innerText = yeniDeger || '-';
+            // İsterseniz buraya toastGoster('Süreç güncellendi!', 'success'); ekleyebilirsiniz.
+        } catch (err) {
+            alert('Hata oluştu: ' + err.message);
+            hucre.innerText = eskiDeger || '-';
+        }
+    }
+}
+// Herkesin düzenleyebileceği Süreç Açıklaması fonksiyonu
+async function herkesDuzenleyebilir(hucre, satirId, alanAdi, eskiDeger) {
+    let yeniDeger = prompt("Lütfen yeni süreci veya ara işlemi girin:", eskiDeger !== '-' ? eskiDeger : '');
+    
+    // Eğer iptale basılmadıysa ve değer değiştiyse
+    if (yeniDeger !== null && yeniDeger !== eskiDeger) {
+        hucre.innerText = 'Kaydediliyor...';
+        
+        try {
+            const { error } = await window.sb.from('tebligatlar').update({ [alanAdi]: yeniDeger }).eq('id', satirId);
+            if (error) throw error;
+            
+            hucre.innerText = yeniDeger || '-';
+            // İsterseniz buraya toastGoster('Süreç güncellendi!', 'success'); ekleyebilirsiniz.
+        } catch (err) {
+            alert('Hata oluştu: ' + err.message);
+            hucre.innerText = eskiDeger || '-';
+        }
+    }
+}
