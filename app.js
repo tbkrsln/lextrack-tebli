@@ -198,7 +198,7 @@ async function verileriCek(sessiz = false) {
 
 function istatistikleriHesaplaVeBas(dataRows) {
     let stats = { toplam: 0, geciken: 0, acil: 0, bekleyen: 0, biten: 0, kontrolEdildi: 0, kontrolBekliyor: 0 };
-    let tasks = []; currentTasks = tasks;
+    let tasks = []; currentTasks = tasks; window.currentTasks = tasks;
     let personelStats = {};
     const bugun = new Date();
     bugun.setHours(0,0,0,0);
@@ -870,8 +870,6 @@ function exceleAktar() {
 window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
     let tdElement, tip, mevcutDeger;
     
-    // Hem 4 parametreli (satirId, alanAdi, tdElement, tip)
-    // hem de 5 parametreli (satirId, alanAdi, mevcutDeger, tdElement, tip) çağrıları destekler
     if (arg3 && (arg3 instanceof HTMLElement || arg3.nodeType === 1)) {
         tdElement = arg3;
         tip = arg4 || 'text';
@@ -881,32 +879,47 @@ window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
         tip = arg5 || 'text';
     }
 
-    // Yetki kontrolü: Yöneticiler tüm alanları düzenleyebilir.
-    // SÜREÇ AÇIKLAMASI alanını ise TÜM KULLANICILAR (avukat, personel, yönetici) SINIRSIZ KEZ düzenleyebilir.
     if (aktifKullaniciRolu !== 'yonetici' && alanAdi !== 'surec_aciklamasi') {
         return;
     }
 
-    if (!tdElement || tdElement.querySelector('.inline-edit-input')) return; // Zaten açıksa tekrar açma
+    if (!tdElement || tdElement.querySelector('.inline-edit-input')) return;
 
-    // Güvenli değer tespiti:
-    // Tırnak veya alt satır hatalarını önlemek için değeri doğrudan hafızadaki güncel listeden al
-    let t = (window.currentTasks || []).find(x => String(x.satir) === String(satirId));
-    if (t) {
-        if (alanAdi === 'surec_aciklamasi') mevcutDeger = t.surec_aciklamasi;
-        else if (alanAdi === 'aciklama') mevcutDeger = t.aciklama;
-        else if (alanAdi === 'dosya_adi') mevcutDeger = t.dosyaAdi;
-        else if (alanAdi === 'son_tarih') mevcutDeger = t.sonTarih;
-        else if (alanAdi === 'personel') mevcutDeger = t.personel;
-    }
+    // Orijinal hücre metnini yedekle
+    let originalHtml = tdElement.innerHTML;
+    let originalText = tdElement.innerText ? tdElement.innerText.trim() : '';
+
+    // Değer tespiti:
+    // 1. tasks/currentTasks
+    const taskList = (typeof currentTasks !== 'undefined' && currentTasks) ? currentTasks : (window.currentTasks || []);
+    let t = taskList.find(x => String(x.satir) === String(satirId));
     
-    if (mevcutDeger === undefined || mevcutDeger === null || mevcutDeger === '-') {
+    // 2. rawData
+    const rawList = (typeof rawData !== 'undefined' && rawData) ? rawData : (window.rawData || []);
+    let rawRow = rawList.find(x => String(x.id) === String(satirId));
+
+    if (!mevcutDeger) {
+        if (t) {
+            if (alanAdi === 'surec_aciklamasi') mevcutDeger = t.surec_aciklamasi;
+            else if (alanAdi === 'aciklama') mevcutDeger = t.aciklama;
+            else if (alanAdi === 'dosya_adi') mevcutDeger = t.dosyaAdi;
+            else if (alanAdi === 'son_tarih') mevcutDeger = t.sonTarih;
+            else if (alanAdi === 'personel') mevcutDeger = t.personel;
+        }
+        if (!mevcutDeger && rawRow) {
+            mevcutDeger = rawRow[alanAdi];
+        }
+        // 3. Hücrenin ekrandaki kendi yazısı (eğer '-' değilse)
+        if (!mevcutDeger && originalText && originalText !== '-') {
+            mevcutDeger = originalText;
+        }
+    }
+
+    if (mevcutDeger === undefined || mevcutDeger === null || String(mevcutDeger).trim() === '-') {
         mevcutDeger = '';
     }
 
-    let originalHtml = tdElement.innerHTML;
     let inputHtml = '';
-    
     let parsedValue = mevcutDeger;
     if (mevcutDeger && tip === 'date') {
         let parts = String(mevcutDeger).split('.');
@@ -922,14 +935,24 @@ window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
         let opts = personellerList.map(o => `<option value="${escapeHtml(o)}" ${o===mevcutDeger?'selected':''}>${escapeHtml(o)}</option>`).join('');
         inputHtml = `<select class="inline-edit-input form-control" style="width:100%; padding:4px; font-size:12px;">${opts}</select>`;
     } else if (tip === 'textarea') {
-        inputHtml = `<textarea class="inline-edit-input form-control" style="width:100%; padding:4px; font-size:12px; min-height:60px;">${escapeHtml(mevcutDeger)}</textarea>`;
+        inputHtml = `<textarea class="inline-edit-input form-control" style="width:100%; padding:4px; font-size:12px; min-height:75px; resize:vertical; box-sizing:border-box;"></textarea>`;
     } else {
         inputHtml = `<input type="text" class="inline-edit-input form-control" value="${escapeHtml(mevcutDeger)}" style="width:100%; padding:4px; font-size:12px;">`;
     }
     
     tdElement.innerHTML = inputHtml;
     let inputEl = tdElement.querySelector('.inline-edit-input');
+    
+    // Değeri doğrudan input.value özelliğine ata (HTML karakter bozulmalarını tamamen önler)
+    if (tip === 'textarea') {
+        inputEl.value = mevcutDeger;
+    }
+    
     inputEl.focus();
+    if (inputEl.setSelectionRange) {
+        const len = inputEl.value.length;
+        inputEl.setSelectionRange(len, len);
+    }
     
     let isSaving = false;
     let iptalEt = () => {
@@ -969,7 +992,7 @@ window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
             }
             
             toastGoster('Kayıt güncellendi!', 'success');
-            verileriCek();
+            verileriCek(true);
         } catch (err) {
             console.error("GÜNCELLEME HATASI:", err);
             toastGoster('Hata: ' + err.message, 'error');
@@ -978,15 +1001,8 @@ window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
     };
     
     inputEl.addEventListener('blur', kaydet);
-    
     inputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && (tip !== 'textarea' || e.ctrlKey)) {
-            e.preventDefault();
-            kaydet();
-        }
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            iptalEt();
-        }
+        if (e.key === 'Enter' && tip !== 'textarea') kaydet();
+        if (e.key === 'Escape') iptalEt();
     });
 };
