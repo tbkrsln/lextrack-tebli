@@ -481,17 +481,17 @@ function verileriEkranaBas(tasks) {
 
         tr.innerHTML = `
             <td style="white-space: nowrap;"><span class="badge ${badgeClass}">${ikon} ${(t.durum || '').toUpperCase()}</span></td>
-            <td style="white-space: nowrap;" class="${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'son_tarih', '${t.sonTarih}', this, 'date')` : ''}">
+            <td style="white-space: nowrap;" class="${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'son_tarih', this, 'date')` : ''}">
                 <b style="font-size: 12.5px; color: var(--text-main);">${escapeHtml(t.sonTarih || '-')}</b>
                 <span class="time-badge ${t.durum === 'Geciken' ? 'c-red' : (t.durum === 'Acil' ? 'c-yellow' : '')}">${escapeHtml(t.kalanGunMetni || '')}</span>
             </td>
-            <td class="cell-dosya ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'dosya_adi', '${escapeHtml((t.dosyaAdi || '').replace(/'/g, "\\'"))}', this, 'text')` : ''}">
+            <td class="cell-dosya ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'dosya_adi', this, 'text')` : ''}">
                 <div class="dosya-title">${escapeHtml(t.dosyaAdi || 'İsimsiz Dosya')}</div>
                 <span class="dosya-sub">Tebliğ: ${escapeHtml(t.tebligatTarihi || '-')}</span>
             </td>
-            <td class="cell-aciklama ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'aciklama', '${escapeHtml((t.aciklama || '').replace(/'/g, "\\'"))}', this, 'textarea')` : ''}">${escapeHtml(t.aciklama || '-')}</td>
-            <td class="cell-surec ${isMyTask ? 'editable-cell' : ''}" onclick="${isMyTask ? `hucreDuzenleAc('${t.satir}', 'surec_aciklamasi', '${escapeHtml((t.surec_aciklamasi || '').replace(/'/g, "\\'"))}', this, 'textarea')` : ''}">${escapeHtml(t.surec_aciklamasi || '-')}</td>
-            <td class="cell-personel ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'personel', '${escapeHtml(t.personel || '')}', this, 'select')` : ''}"><span class="personel-tag">👤 ${escapeHtml(t.personel || 'Atanmadı')}</span></td>
+            <td class="cell-aciklama ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'aciklama', this, 'textarea')` : ''}">${escapeHtml(t.aciklama || '-')}</td>
+            <td class="cell-surec editable-cell" onclick="hucreDuzenleAc('${t.satir}', 'surec_aciklamasi', this, 'textarea')" title="Süreci veya ara işlemleri düzenlemek için tıklayın">${escapeHtml(t.surec_aciklamasi || '-')}</td>
+            <td class="cell-personel ${aktifKullaniciRolu === 'yonetici' ? 'editable-cell' : ''}" onclick="${aktifKullaniciRolu === 'yonetici' ? `hucreDuzenleAc('${t.satir}', 'personel', this, 'select')` : ''}"><span class="personel-tag">👤 ${escapeHtml(t.personel || 'Atanmadı')}</span></td>
             <td class="cell-emir">${isEmirHucresi}</td>
             <td class="cell-kontrol">${kontrolHucresi}</td>
         `;
@@ -845,18 +845,51 @@ function exceleAktar() {
 
 
 // ==========================================
-// INLINE EDITING (YÖNETİCİ İÇİN)
+// INLINE EDITING
 // ==========================================
-window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) {
-    if (aktifKullaniciRolu !== 'yonetici' && alanAdi !== 'surec_aciklamasi') return;
-    if (tdElement.querySelector('.inline-edit-input')) return; // Already editing
+window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
+    let tdElement, tip, mevcutDeger;
     
+    // Hem 4 parametreli (satirId, alanAdi, tdElement, tip)
+    // hem de 5 parametreli (satirId, alanAdi, mevcutDeger, tdElement, tip) çağrıları destekler
+    if (arg3 && (arg3 instanceof HTMLElement || arg3.nodeType === 1)) {
+        tdElement = arg3;
+        tip = arg4 || 'text';
+    } else {
+        mevcutDeger = arg3;
+        tdElement = arg4;
+        tip = arg5 || 'text';
+    }
+
+    // Yetki kontrolü: Yöneticiler tüm alanları düzenleyebilir.
+    // SÜREÇ AÇIKLAMASI alanını ise TÜM KULLANICILAR (avukat, personel, yönetici) SINIRSIZ KEZ düzenleyebilir.
+    if (aktifKullaniciRolu !== 'yonetici' && alanAdi !== 'surec_aciklamasi') {
+        return;
+    }
+
+    if (!tdElement || tdElement.querySelector('.inline-edit-input')) return; // Zaten açıksa tekrar açma
+
+    // Güvenli değer tespiti:
+    // Tırnak veya alt satır hatalarını önlemek için değeri doğrudan hafızadaki güncel listeden al
+    let t = (window.currentTasks || []).find(x => String(x.satir) === String(satirId));
+    if (t) {
+        if (alanAdi === 'surec_aciklamasi') mevcutDeger = t.surec_aciklamasi;
+        else if (alanAdi === 'aciklama') mevcutDeger = t.aciklama;
+        else if (alanAdi === 'dosya_adi') mevcutDeger = t.dosyaAdi;
+        else if (alanAdi === 'son_tarih') mevcutDeger = t.sonTarih;
+        else if (alanAdi === 'personel') mevcutDeger = t.personel;
+    }
+    
+    if (mevcutDeger === undefined || mevcutDeger === null || mevcutDeger === '-') {
+        mevcutDeger = '';
+    }
+
     let originalHtml = tdElement.innerHTML;
     let inputHtml = '';
     
     let parsedValue = mevcutDeger;
-    if (mevcutDeger && mevcutDeger !== '-' && tip === 'date') {
-        let parts = mevcutDeger.split('.');
+    if (mevcutDeger && tip === 'date') {
+        let parts = String(mevcutDeger).split('.');
         if (parts.length === 3) {
             parsedValue = parts[2] + '-' + parts[1] + '-' + parts[0];
         }
@@ -866,10 +899,18 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
         inputHtml = `<input type="date" class="inline-edit-input form-control" value="${parsedValue}" style="width:100%; padding:4px; font-size:12px;">`;
     } else if (tip === 'select') {
         let personellerList = Array.from(document.getElementById('m-personel-select').options).map(o => o.value).filter(v => v && v !== '__custom__');
-        let opts = personellerList.map(o => `<option value="${o}" ${o===mevcutDeger?'selected':''}>${o}</option>`).join('');
+        let opts = personellerList.map(o => `<option value="${escapeHtml(o)}" ${o===mevcutDeger?'selected':''}>${escapeHtml(o)}</option>`).join('');
         inputHtml = `<select class="inline-edit-input form-control" style="width:100%; padding:4px; font-size:12px;">${opts}</select>`;
     } else if (tip === 'textarea') {
-        inputHtml = `<textarea class="inline-edit-input form-control" style="width:100%; padding:4px; font-size:12px; min-height:60px;">${escapeHtml(mevcutDeger)}</textarea>`;
+        inputHtml = `
+            <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
+                <textarea class="inline-edit-input form-control" style="width:100%; padding:6px; font-size:12px; min-height:85px; resize:vertical; box-sizing:border-box;">${escapeHtml(mevcutDeger)}</textarea>
+                <div style="display:flex; justify-content:flex-end; gap:4px; margin-top:2px;">
+                    <button type="button" class="btn btn-success btn-xs btn-inline-save" style="padding:2px 8px; font-size:11px; cursor:pointer;">💾 Kaydet</button>
+                    <button type="button" class="btn btn-outline btn-xs btn-inline-cancel" style="padding:2px 8px; font-size:11px; cursor:pointer;">❌ Vazgeç</button>
+                </div>
+            </div>
+        `;
     } else {
         inputHtml = `<input type="text" class="inline-edit-input form-control" value="${escapeHtml(mevcutDeger)}" style="width:100%; padding:4px; font-size:12px;">`;
     }
@@ -878,17 +919,21 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
     let inputEl = tdElement.querySelector('.inline-edit-input');
     inputEl.focus();
     
+    let isSaving = false;
     let iptalEt = () => {
+        if (isSaving) return;
         tdElement.innerHTML = originalHtml;
     };
     
     let kaydet = async () => {
+        if (isSaving) return;
         let yeniDeger = inputEl.value;
-        if (yeniDeger === parsedValue || (tip !== 'date' && yeniDeger === mevcutDeger)) {
+        if (yeniDeger.trim() === String(mevcutDeger || '').trim()) {
             iptalEt();
             return;
         }
         
+        isSaving = true;
         try {
             inputEl.disabled = true;
             let updateObj = {};
@@ -899,49 +944,61 @@ window.hucreDuzenleAc = function(satirId, alanAdi, mevcutDeger, tdElement, tip) 
                 updateObj[alanAdi] = yeniDeger;
             }
             
+            tdElement.innerHTML = '<span style="font-size:11.5px; color:var(--text-muted);">Kaydediliyor...</span>';
+            
             const { error } = await window.sb.from('tebligatlar').update(updateObj).eq('id', satirId);
             if (error) throw error;
+            
+            if (t) {
+                if (alanAdi === 'surec_aciklamasi') t.surec_aciklamasi = yeniDeger;
+                else if (alanAdi === 'aciklama') t.aciklama = yeniDeger;
+                else if (alanAdi === 'dosya_adi') t.dosyaAdi = yeniDeger;
+                else if (alanAdi === 'personel') t.personel = yeniDeger;
+            }
+            
             toastGoster('Kayıt güncellendi!', 'success');
-            verileriCek(); // Yeniden yükle
-        } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
+            verileriCek();
+        } catch (err) {
+            console.error("GÜNCELLEME HATASI:", err);
             toastGoster('Hata: ' + err.message, 'error');
-            iptalEt();
+            tdElement.innerHTML = originalHtml;
         }
     };
     
-    inputEl.addEventListener('blur', kaydet);
+    if (tip === 'textarea') {
+        let saveBtn = tdElement.querySelector('.btn-inline-save');
+        let cancelBtn = tdElement.querySelector('.btn-inline-cancel');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                kaydet();
+            });
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                iptalEt();
+            });
+        }
+        inputEl.addEventListener('blur', (e) => {
+            setTimeout(() => {
+                if (!isSaving && document.activeElement !== saveBtn && document.activeElement !== cancelBtn) {
+                    kaydet();
+                }
+            }, 250);
+        });
+    } else {
+        inputEl.addEventListener('blur', kaydet);
+    }
+    
     inputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && tip !== 'textarea') kaydet();
-        if (e.key === 'Escape') iptalEt();
+        if (e.key === 'Enter' && (tip !== 'textarea' || e.ctrlKey)) {
+            e.preventDefault();
+            kaydet();
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            iptalEt();
+        }
     });
 };
-
-
-
-// Herkesin düzenleyebileceği Süreç Açıklaması fonksiyonu
-window.herkesDuzenleyebilir = async function(hucre, satirId, alanAdi, eskiDeger) {
-    let yeniDeger = prompt("Lütfen yeni süreci veya ara işlemi girin:", eskiDeger !== '-' ? eskiDeger : '');
-    
-    if (yeniDeger !== null && yeniDeger !== eskiDeger) {
-        let orjinalHtml = hucre.innerHTML;
-        hucre.innerText = 'Kaydediliyor...';
-        
-        try {
-            const { error } = await window.sb.from('tebligatlar').update({ [alanAdi]: yeniDeger }).eq('id', satirId);
-            if (error) throw error;
-            
-            hucre.innerText = yeniDeger || '-';
-        } catch (err) {
-            alert('Hata oluştu: ' + err.message);
-            hucre.innerHTML = orjinalHtml;
-        }
-    }
-};
-
-
-
-
-
-
-
-

@@ -377,7 +377,15 @@
             margin-top: 3px;
         }
 
-        .cell-aciklama {
+        .cell-surec {
+    word-break: break-word;
+    white-space: pre-wrap;
+    line-height: 1.35;
+    color: var(--text-main);
+    font-size: 12px;
+}
+
+.cell-aciklama {
             word-break: break-word;
             white-space: normal;
             line-height: 1.35;
@@ -806,4 +814,5 @@
 
 .editable-cell { cursor: pointer; transition: background 0.2s; }
 .editable-cell:hover { background-color: #f1f5f9 !important; box-shadow: inset 0 0 0 1px #cbd5e1; }
+
 
