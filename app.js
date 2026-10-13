@@ -981,21 +981,46 @@ window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
             
             tdElement.innerHTML = '<span style="font-size:11.5px; color:var(--text-muted);">Kaydediliyor...</span>';
             
-            const { error } = await window.sb.from('tebligatlar').update(updateObj).eq('id', satirId);
-            if (error) throw error;
+            let updateError = null;
+
+            // Eğer surec_aciklamasi güncelleniyorsa önce RPC fonksiyonunu dene (RLS kısıtlamalarına takılmaz)
+            if (alanAdi === 'surec_aciklamasi') {
+                try {
+                    const rpcRes = await window.sb.rpc('surec_guncelle', { p_id: String(satirId), p_metin: yeniDeger });
+                    if (rpcRes.error) throw rpcRes.error;
+                } catch (rpcErr) {
+                    // RPC yoksa doğrudan standart update ile güncelle
+                    const { data, error } = await window.sb.from('tebligatlar').update({ surec_aciklamasi: yeniDeger }).eq('id', satirId).select();
+                    if (error) updateError = error;
+                    else if (!data || data.length === 0) {
+                        updateError = new Error("Supabase RLS izni vermedi. Lütfen SQL kuralını çalıştırın.");
+                    }
+                }
+            } else {
+                const { error } = await window.sb.from('tebligatlar').update(updateObj).eq('id', satirId);
+                if (error) updateError = error;
+            }
+
+            if (updateError) throw updateError;
             
+            // Ekrandaki hücreyi hemen girilen yeni değerle güncelle
+            tdElement.innerHTML = escapeHtml(yeniDeger || '-');
+
             if (t) {
                 if (alanAdi === 'surec_aciklamasi') t.surec_aciklamasi = yeniDeger;
                 else if (alanAdi === 'aciklama') t.aciklama = yeniDeger;
                 else if (alanAdi === 'dosya_adi') t.dosyaAdi = yeniDeger;
                 else if (alanAdi === 'personel') t.personel = yeniDeger;
             }
+            if (rawRow) {
+                rawRow[alanAdi] = yeniDeger;
+            }
             
             toastGoster('Kayıt güncellendi!', 'success');
             verileriCek(true);
         } catch (err) {
             console.error("GÜNCELLEME HATASI:", err);
-            toastGoster('Hata: ' + err.message, 'error');
+            alert('Güncelleme Başarısız Oldu:\n' + err.message);
             tdElement.innerHTML = originalHtml;
         }
     };
