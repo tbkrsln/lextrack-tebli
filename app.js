@@ -156,12 +156,17 @@ let rawData = null;
 let seciliDurum = 'Tümü';
 let seciliGun = 7;
 
-async function verileriCek() {
+async function verileriCek(sessiz = false) {
     const loadingEl = document.getElementById('loading');
     const dashboardEl = document.getElementById('dashboard');
     
-    if (loadingEl) loadingEl.style.display = 'block';
-    if (dashboardEl) dashboardEl.style.display = 'none';
+    // Yalnızca ilk açılışta ve dashboard henüz ekranda yokken tam ekran yükleme göster.
+    // Dashboard zaten açıksa ekranı ASLA gizleme, arka planda anlık ve kesintisiz güncelle!
+    const ilkAcilis = !dashboardEl || dashboardEl.style.display === 'none';
+    if (ilkAcilis && !sessiz) {
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (dashboardEl) dashboardEl.style.display = 'none';
+    }
 
     try {
         const { data, error } = await window.sb.from('tebligatlar')
@@ -170,9 +175,24 @@ async function verileriCek() {
 
         if (error) throw error;
         rawData = data || [];
+        
+        // Kullanıcının mevcut kaydırma (scroll) pozisyonunu koru
+        const currentScrollY = window.scrollY;
+        
         istatistikleriHesaplaVeBas(rawData);
-    } catch (err) { console.error("GIRIS HATASI DETAYI:", err); console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
-        if (loadingEl) loadingEl.innerHTML = `<span style="color:var(--danger-red)">Veriler çekilirken hata oluştu: ${err.message}</span>`;
+        
+        // Kullanıcının sayfada kaldığı yeri kaybetmemesi için scroll'u anında geri yükle
+        if (!ilkAcilis || sessiz) {
+            window.scrollTo({ top: currentScrollY, behavior: 'instant' });
+        }
+    } catch (err) { 
+        console.error("GIRIS HATASI DETAYI:", err); 
+        console.log("URL Kontrol:", typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "YOK");
+        if (ilkAcilis && loadingEl) {
+            loadingEl.innerHTML = `<span style="color:var(--danger-red)">Veriler çekilirken hata oluştu: ${err.message}</span>`;
+        } else {
+            toastGoster('Veriler güncellenirken hata oluştu: ' + err.message, 'error');
+        }
     }
 }
 
@@ -902,15 +922,7 @@ window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
         let opts = personellerList.map(o => `<option value="${escapeHtml(o)}" ${o===mevcutDeger?'selected':''}>${escapeHtml(o)}</option>`).join('');
         inputHtml = `<select class="inline-edit-input form-control" style="width:100%; padding:4px; font-size:12px;">${opts}</select>`;
     } else if (tip === 'textarea') {
-        inputHtml = `
-            <div style="display:flex; flex-direction:column; gap:4px; width:100%;">
-                <textarea class="inline-edit-input form-control" style="width:100%; padding:6px; font-size:12px; min-height:85px; resize:vertical; box-sizing:border-box;">${escapeHtml(mevcutDeger)}</textarea>
-                <div style="display:flex; justify-content:flex-end; gap:4px; margin-top:2px;">
-                    <button type="button" class="btn btn-success btn-xs btn-inline-save" style="padding:2px 8px; font-size:11px; cursor:pointer;">💾 Kaydet</button>
-                    <button type="button" class="btn btn-outline btn-xs btn-inline-cancel" style="padding:2px 8px; font-size:11px; cursor:pointer;">❌ Vazgeç</button>
-                </div>
-            </div>
-        `;
+        inputHtml = `<textarea class="inline-edit-input form-control" style="width:100%; padding:4px; font-size:12px; min-height:60px;">${escapeHtml(mevcutDeger)}</textarea>`;
     } else {
         inputHtml = `<input type="text" class="inline-edit-input form-control" value="${escapeHtml(mevcutDeger)}" style="width:100%; padding:4px; font-size:12px;">`;
     }
@@ -965,31 +977,7 @@ window.hucreDuzenleAc = function(satirId, alanAdi, arg3, arg4, arg5) {
         }
     };
     
-    if (tip === 'textarea') {
-        let saveBtn = tdElement.querySelector('.btn-inline-save');
-        let cancelBtn = tdElement.querySelector('.btn-inline-cancel');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                kaydet();
-            });
-        }
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                iptalEt();
-            });
-        }
-        inputEl.addEventListener('blur', (e) => {
-            setTimeout(() => {
-                if (!isSaving && document.activeElement !== saveBtn && document.activeElement !== cancelBtn) {
-                    kaydet();
-                }
-            }, 250);
-        });
-    } else {
-        inputEl.addEventListener('blur', kaydet);
-    }
+    inputEl.addEventListener('blur', kaydet);
     
     inputEl.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && (tip !== 'textarea' || e.ctrlKey)) {
